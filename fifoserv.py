@@ -6,16 +6,11 @@ import json
 from queue import Queue
 from collections import OrderedDict
 
-from classes import RendezVous, Exchange
-
-import tcp_transfer
-from tcp_transfer import *
-
 
 MAX_ITEM = 1000
 MSG_SIZE = 512
 MAX_TOKEN_LENGTH=20
-SERVER_PORT = 5555
+DEFAULT_PORT = 5555
 
 
 class FifoServer(Queue):
@@ -71,7 +66,6 @@ class FifoServer(Queue):
         s.listen()
         while True:
             conn, addr = s.accept()
-            print("CONN")
             try:
                 while True:
                     msg = conn.recv(MSG_SIZE)
@@ -93,65 +87,16 @@ class FifoServer(Queue):
             finally:
                 conn.close()
 
-class FifoClient(RendezVous):
-
-    def initialization(self, server_ip, server_port):
-        self._server_ip = server_ip
-        self._server_port = server_port
-
-    def register(self, host_ip, host_port):
-        self.send("put", self._token, host_ip, host_port)
-
-    def retreive(self):
-        return self.send("get", self._token)
-
-    def send(self, method, token, ip=None, port=None):
-        msg = json.dumps({"method" : method,
-                          "token": token,
-                          "ip" : ip,
-                          "port": port})
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self._server_ip, self._server_port))
-        while True:
-            s.sendall(msg.encode())
-            data = s.recv(MSG_SIZE)
-            if data:
-                return data
-            else:
-                break
-        s.close()
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 2 and sys.argv[1] == "serve":
-        print("Listening on port {}".format(SERVER_PORT))
-        FifoServer("", SERVER_PORT).listen()
-
-    if len(sys.argv) < 4:
-        sys.exit(1)
-
-    #token = hashlib.sha224(sys.argv[3].encode()).hexdigest()
-    token = sys.argv[3]
-    print("Token: " + token)
-
-    rdv = FifoClient(token)
-    transfer = TLSTUP()
-
-    exch = Exchange(rdv, transfer)
-    exch.initialization(server_ip="", server_port=SERVER_PORT)
-
-    if sys.argv[1] == "send":
-        exch.register(host_ip="", host_port=tcp_transfer.DEFAULT_PORT)
-        print("Waiting for file to be pick up ...")
-        exch.serve(sys.argv[2])
-        print("Transfer completed.")
-
-    elif sys.argv[1] == "get":
-        result = json.loads(exch.retreive())
-        if not "msg" in result:
-            exch.get((result["ip"], result["port"]), sys.argv[2])
-            print("Transfer completed.")
+    if len(sys.argv) == 2:
+        arg = sys.argv[1].split(":")
+        ip = arg[0]
+        if len(arg) == 2:
+            port = arg[1]
         else:
-            print("Failed to get file: " + result["msg"])
+            port = DEFAULT_PORT
+        print("Listening on {}:{}".format(ip, port))
+        FifoServer(ip, int(port)).listen()

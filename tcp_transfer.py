@@ -10,6 +10,7 @@ DEFAULT_PORT=6666
 KEY_FILE = ""
 CERT_FILE = ""
 
+
 class TcpTransfer(FileTransfer):
 
 
@@ -19,7 +20,7 @@ class TcpTransfer(FileTransfer):
 
     def getSocket(self):
         return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
+
     def serve_file(self, path):
         s = self.getSocket()
         s.bind(('', self._port))
@@ -56,10 +57,10 @@ class TcpTransfer(FileTransfer):
 
 
 class TcpWithUPnP(TcpTransfer):
-    
+
     def serve_file(self, path):
         u = miniupnpc.UPnP()
-        
+
         if u.discover():
             print("UPnP IGD service found at " + u.selectigd())
             print("Adding TCP port redirection...")
@@ -75,11 +76,9 @@ class TcpWithUPnP(TcpTransfer):
 
 
 class TLSTUP(TcpWithUPnP):
-    
+
     def getSocket(self):
         sock = super().getSocket()
         sock = ssl.wrap_socket(sock, keyfile=KEY_FILE, certfile=CERT_FILE)
-        
+
         return sock
-            
-            
