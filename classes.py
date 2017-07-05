@@ -38,12 +38,8 @@ class Exchange:
         self._rdv = rdv
         self._transfer = transfer
 
-    def initialization(self, *args, **kwargs):
-        self._transfer.initialization(*args, **kwargs)
-        self._rdv.initialization(*args, **kwargs)
-
     def register(self, *args, **kwargs):
-        self._rdv.register(*args, **kwargs)
+        return self._rdv.register(*args, **kwargs)
 
     def serve(self, *args, **kwargs):
         self._transfer.serve_file(*args, **kwargs)

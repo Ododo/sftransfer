@@ -1,7 +1,14 @@
 import sys
-import hashlib
 import socket
+import ssl
 import json
+import base64
+import os
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from queue import Queue
 from collections import OrderedDict
@@ -11,6 +18,8 @@ MAX_ITEM = 1000
 MSG_SIZE = 512
 MAX_TOKEN_LENGTH=20
 DEFAULT_PORT = 5555
+CERT_FILE=""
+KEY_FILE=""
 
 
 class FifoServer(Queue):
@@ -46,15 +55,28 @@ class FifoServer(Queue):
             self.get(block=False)
         self.put(FifoServer.Item(token, host), block=False)
 
+    def _getKey(self, token):
+        salt = os.urandom(16)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(token.encode()))
+        return key
+
     def _process_message(self, data):
         try:
             data = json.loads(data)
             token = data["token"][:MAX_TOKEN_LENGTH]
             if data["method"].lower() == "put":
-                self[token] = (data["ip"], data["port"])
+                key = self._getKey(token).decode()
+                self[token] = (data["ip"], data["port"], key)
+                return key
             elif data["method"].lower() == "get":
                 return self[token]
-            return "Success"
         except json.JSONDecodeError:
             return "Bad data format"
         except KeyError:
@@ -62,6 +84,7 @@ class FifoServer(Queue):
 
     def listen(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s = ssl.wrap_socket(s, keyfile=KEY_FILE, certfile=CERT_FILE)
         s.bind((self._ip, self._port))
         s.listen()
         while True:
@@ -73,14 +96,17 @@ class FifoServer(Queue):
                         try:
                             result = self._process_message(msg)
                             if type(result) is tuple:
-                                data = json.dumps({"ip" : result[0],
-                                                   "port" : result[1]})
+                                data = {
+                                    "ip" : result[0],
+                                    "port" : result[1],
+                                    "key" : result[2]
+                                }
                             else:
-                                data = json.dumps(({"msg" : result}))
-
-                            conn.sendall(data.encode())
-                        except:
-                            pass
+                                data = { "msg" : result }
+                            data = json.dumps(data).encode()
+                            conn.sendall(data)
+                        except Exception as e:
+                            print(e)
                         break
                     else:
                         break
