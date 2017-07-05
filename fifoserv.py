@@ -1,9 +1,12 @@
+#!/usr/bin/python
+
 import sys
 import socket
 import ssl
 import json
 import base64
 import os
+import argparse
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -13,13 +16,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from queue import Queue
 from collections import OrderedDict
 
-
-MAX_ITEM = 1000
-MSG_SIZE = 512
-MAX_TOKEN_LENGTH=20
-DEFAULT_PORT = 5555
-CERT_FILE=""
-KEY_FILE=""
+from config import *
 
 
 class FifoServer(Queue):
@@ -59,7 +56,7 @@ class FifoServer(Queue):
         salt = os.urandom(16)
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
-            length=32,
+            length=48,
             salt=salt,
             iterations=100000,
             backend=default_backend()
@@ -86,7 +83,7 @@ class FifoServer(Queue):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s = ssl.wrap_socket(s, keyfile=KEY_FILE, certfile=CERT_FILE)
         s.bind((self._ip, self._port))
-        s.listen()
+        s.listen(3)
         while True:
             conn, addr = s.accept()
             try:
@@ -114,15 +111,24 @@ class FifoServer(Queue):
                 conn.close()
 
 
-
 if __name__ == "__main__":
 
-    if len(sys.argv) == 2:
-        arg = sys.argv[1].split(":")
-        ip = arg[0]
-        if len(arg) == 2:
-            port = arg[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("bind_addr", nargs='?',
+                        help="Specify address to listen on, ip:[port]")
+
+    args = parser.parse_args()
+
+    if args.bind_addr:
+        host = args.bind_addr.split(":")
+        ip = host[0]
+        if len(host) == 2:
+            port = host[1]
         else:
-            port = DEFAULT_PORT
-        print("Listening on {}:{}".format(ip, port))
-        FifoServer(ip, int(port)).listen()
+            port = SERVER_PORT
+    else:
+        ip = "localhost"
+        port = SERVER_PORT
+
+    print("Listening on {}:{}".format(ip, port))
+    FifoServer(ip, int(port)).listen()
