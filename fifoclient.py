@@ -6,6 +6,7 @@ import socket
 import ssl
 import json
 import argparse
+import base64
 
 from classes import RendezVous, Exchange
 from tcp_transfer import TcpWithFernet, TcpWithUPnPWithFernet, TcpWithAES
@@ -101,7 +102,6 @@ if __name__ == "__main__":
             sys.exit(1)
         res = exch.register(host_ip="", host_port=args.tcp_port)
         res = json.loads(res)
-        print(res)
         transfer.initialization(res["msg"])
         print("Waiting for file to be pick up ...")
         exch.serve(args.path)

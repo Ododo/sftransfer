@@ -23,9 +23,13 @@ class TcpTransfer(FileTransfer):
         return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def _process_in_data(self, chunk):
+        if chunk is None:
+            return b""
         return chunk
 
     def _process_out_data(self, chunk):
+        if chunk is None:
+            return b""
         return chunk
 
     def serve_file(self, path):
@@ -86,13 +90,18 @@ class TcpWithUPnP(TcpTransfer):
 class TcpWithFernet(TcpTransfer):
 
     def initialization(self, key):
-        self._cipher = Fernet(key[:32].encode())
-        print(self._cipher)
+        key = base64.urlsafe_b64decode(key)
+        key = base64.urlsafe_b64encode(key[:32])
+        self._cipher = Fernet(key)
 
     def _process_in_data(self, chunk):
+        if chunk is None:
+            return b""
         return self._cipher.decrypt(chunk)
 
     def _process_out_data(self, chunk):
+        if chunk is None:
+            return b""
         return self._cipher.encrypt(chunk)
 
 class TcpWithAES(TcpTransfer):

@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.twofactor.hotp import HOTP
 
 from queue import Queue
 from collections import OrderedDict
@@ -52,32 +53,37 @@ class FifoServer(Queue):
             self.get(block=False)
         self.put(FifoServer.Item(token, host), block=False)
 
-    def _getKey(self, token):
-        salt = os.urandom(16)
+    def _generateKey(self, token, length=48, iterations=100000, salt=None):
+        if salt is None:
+            salt = os.urandom(16)
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
-            length=48,
+            length=length,
             salt=salt,
-            iterations=100000,
+            iterations=iterations,
             backend=default_backend()
         )
         key = base64.urlsafe_b64encode(kdf.derive(token.encode()))
         return key
 
+    def _generateHashmapKey(self, token, integer):
+        return self._getKey(token, length=16, iterations=integer, salt=b"")
+
     def _process_message(self, data):
         try:
             data = json.loads(data)
-            token = data["token"][:MAX_TOKEN_LENGTH]
+            token, integer = data["token"].split(",")
+            token = self._generateHashmapKey(token, int(integer)).decode()
             if data["method"].lower() == "put":
                 key = self._getKey(token).decode()
                 self[token] = (data["ip"], data["port"], key)
                 return key
             elif data["method"].lower() == "get":
                 return self[token]
-        except json.JSONDecodeError:
-            return "Bad data format"
         except KeyError:
             return "Invalid token or data incomplete"
+        except Exception as e:
+            return "Bad data format"
 
     def listen(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
