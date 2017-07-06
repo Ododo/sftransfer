@@ -53,3 +53,8 @@ File transfer with several transport ways and security options.
  # Motivations
  
      Even though this kind of software already existed i wanted to test different ways to do it.
+     
+ # Usage
+    
+     Server: ./fifoserv.py [ip:[port]]
+     Client: ./fifoclient.py -h
