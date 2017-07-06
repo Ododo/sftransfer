@@ -51,7 +51,8 @@ if __name__ == "__main__":
     parser.add_argument("task", choices=["get", "send"],
                         help="Can be either 'send' or 'get'")
     parser.add_argument("path", help="Path to write or read the file")
-    parser.add_argument("password", help="Password used to retreive your peer, max-length=16")
+    parser.add_argument("password", help="""Password used to retreive your peer,
+                       you must give a string and a number of your choice, e.g: password,1337""")
     parser.add_argument("-p", "--tcp-port", type=int, default=TCP_PORT,
                         help="Specify the port used for file transfer")
     parser.add_argument("-s", "--server-host",
@@ -102,7 +103,11 @@ if __name__ == "__main__":
             sys.exit(1)
         res = exch.register(host_ip="", host_port=args.tcp_port)
         res = json.loads(res)
-        transfer.initialization(res["msg"])
+        try:
+            transfer.initialization(res["msg"])
+        except:
+            print("You must give a password in the format string,integer")
+            sys.exit(1)
         print("Waiting for file to be pick up ...")
         exch.serve(args.path)
         print("Transfer completed.")
@@ -112,7 +117,6 @@ if __name__ == "__main__":
             print("File is not writable")
             sys.exit(1)
         result = json.loads(exch.retreive())
-        print(result)
         if not "msg" in result:
             transfer.initialization(result["key"])
             exch.get((result["ip"], result["port"]), args.path)

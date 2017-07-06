@@ -1,10 +1,9 @@
 # ftransfer
-Easy file transfer with differents transport ways.
+File transfer with several transports ways and security layers.
 
 # TODO
 
-    -add TLS support for fifoserv, enhance cert/key selection
-    -Protect fifoserv from DOS attacks
-    -enable token verification when retreiving file with tcp
-    -do a pretty (cli) user interface
+    -Protect fifoserv from DOS attack that spam put requests.
+    -Enable token verification when sending file (!)
+    -Implement different hole punching techniques
     -Add udp support ?

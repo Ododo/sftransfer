@@ -67,7 +67,7 @@ class FifoServer(Queue):
         return key
 
     def _generateHashmapKey(self, token, integer):
-        return self._getKey(token, length=16, iterations=integer, salt=b"")
+        return self._generateKey(token, length=16, iterations=integer, salt=b"")
 
     def _process_message(self, data):
         try:
@@ -75,7 +75,7 @@ class FifoServer(Queue):
             token, integer = data["token"].split(",")
             token = self._generateHashmapKey(token, int(integer)).decode()
             if data["method"].lower() == "put":
-                key = self._getKey(token).decode()
+                key = self._generateKey(token).decode()
                 self[token] = (data["ip"], data["port"], key)
                 return key
             elif data["method"].lower() == "get":
@@ -99,8 +99,10 @@ class FifoServer(Queue):
                         try:
                             result = self._process_message(msg)
                             if type(result) is tuple:
+                                ip = result[0] if result[0] \
+                                               else conn.getpeername()[0]
                                 data = {
-                                    "ip" : result[0],
+                                    "ip" : ip,
                                     "port" : result[1],
                                     "key" : result[2]
                                 }
