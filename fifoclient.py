@@ -89,14 +89,14 @@ if __name__ == "__main__":
 
     if args.use_upnp:
         if args.use_aes:
-            transfer = TcpWithUPnPWithAES()
+            transfer = TcpWithUPnPWithAES(port=args.tcp_port)
         else:
-            transfer = TcpWithUPnPWithFernet()
+            transfer = TcpWithUPnPWithFernet(port=args.tcp_port)
     else:
         if args.use_aes:
-            transfer = TcpWithAES()
+            transfer = TcpWithAES(port=args.tcp_port)
         else:
-            transfer = TcpWithFernet()
+            transfer = TcpWithFernet(port=args.tcp_port)
 
     rdv.initialization(server_ip=serv_ip, server_port=serv_port)
     exch = Exchange(rdv, transfer)

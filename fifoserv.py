@@ -67,7 +67,9 @@ class FifoServer(Queue):
         return key
 
     def _generateHashmapKey(self, token, integer):
-        return self._generateKey(token, length=16, iterations=integer, salt=b"")
+        return self._generateKey(token, length=16,
+                                 iterations=integer,
+                                 salt=SERVER_KEY)
 
     def _process_message(self, data):
         try:
