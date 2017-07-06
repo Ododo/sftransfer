@@ -44,7 +44,7 @@ File transfer with several transport ways and security options.
      3. You can use AES for transferring large files but then nothing stop an attacker from sending data to the receiver,
         (and maybe indefinitely: will be fixed soon).
      4. At the moment nothing stops an attacker (with both the encryption method) from getting encrypted data
-        from the sender and fake that the transaction was completed, however, those data can not be decrypted.
+        from the sender and fake that the transaction was completed, however, those data cannot be decrypted.
      5. The server side is still vulnerable to DOS attack such as spamming put requests, i'll add a kind of timeout/blacklist
         to prevent such thing.
      6. In the server side nothing stops the stored keys to be read in-memory (do you have a solution for that ?)
