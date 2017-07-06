@@ -1,6 +1,5 @@
-# ftransfer
+# sftransfer
 File transfer with several transport ways and security options.
-
 
 
 # What can i do with this program
@@ -41,7 +40,7 @@ File transfer with several transport ways and security options.
      2. The Fernet encryption mode provides packet authentification, which means that 
         if the receiver detect that a packet is falsified, it will stop the transaction.
         However, it cannot be used with too large files (see https://cryptography.io/en/latest/fernet/#limitations)
-     3. You can use AES for transferring large files but then nothing stop an attacker from sending data to the receiver,
+     3. You can use AES for transferring large files but then nothing stops an attacker from sending data to the receiver,
         (and maybe indefinitely: will be fixed soon).
      4. At the moment nothing stops an attacker (with both the encryption method) from getting encrypted data
         from the sender and fake that the transaction was completed, however, those data cannot be decrypted.
@@ -52,7 +51,9 @@ File transfer with several transport ways and security options.
      
  # Motivations
  
-     Even though this kind of software already existed i wanted to test different ways to do it.
+     Even though this kind of software already existed i wanted to test different ways to do it,
+     magic-wormhole is great but i wanted to implement something simpler with much less lines of code,
+     extensible and with concepts that i understand.
      
  # Usage
      
