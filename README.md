@@ -30,7 +30,7 @@ File transfer with several transport ways and security options.
         to be sent to the receiver. The server also generates and store (temporarily) a symetric key.
      3. The receiver ask the rendezvous server for the ip, port and the generated symetric key,
         still by using a TLS session.
-     4. The receiver begin to read the encrypted data from the sender'socket and decrypt it (using the shared
+     4. The receiver begin to read the encrypted data from the sender'socket and decrypt them (using the shared
         symetric key)
      5. File is transferred.
      
@@ -55,6 +55,9 @@ File transfer with several transport ways and security options.
      Even though this kind of software already existed i wanted to test different ways to do it.
      
  # Usage
-    
+     
+     This program should be runnable with a recent Python 2 or 3
+     
+     pip install -r requirements.txt
      Server: ./fifoserv.py [ip:[port]]
      Client: ./fifoclient.py -h

@@ -1,0 +1,2 @@
+miniupnpc>=1.9
+cryptography>=1.9
