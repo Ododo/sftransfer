@@ -9,7 +9,11 @@ import argparse
 import base64
 
 from classes import RendezVous, Exchange
-from tcp_transfer import TcpWithFernet, TcpWithUPnPWithFernet, TcpWithAES
+from tcp_transfer import TcpWithFernet
+from tcp_transfer import TcpWithAES
+from tcp_transfer import TcpWithUPnPWithFernet
+from tcp_transfer import TcpWithUPnPWithAES
+
 from config import *
 
 
