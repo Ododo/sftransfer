@@ -35,9 +35,11 @@ class FifoClient(RendezVous):
                           "ip" : ip,
                           "port": port
                           })
-
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.load_verify_locations(CERT_FILE)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s = ssl.wrap_socket(s)
+        s = context.wrap_socket(s)
         s.connect((self._server_ip, self._server_port))
         while True:
             s.sendall(msg.encode())

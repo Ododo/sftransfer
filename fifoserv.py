@@ -87,12 +87,15 @@ class FifoServer(Queue):
             return "Bad data format"
 
     def listen(self):
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        context.load_cert_chain(keyfile=KEY_FILE, certfile=CERT_FILE)
+        context.verify_mode = ssl.CERT_NONE
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s = ssl.wrap_socket(s, keyfile=KEY_FILE, certfile=CERT_FILE)
         s.bind((self._ip, self._port))
         s.listen(3)
         while True:
             conn, addr = s.accept()
+            conn = context.wrap_socket(conn, server_side=True)
             try:
                 while True:
                     msg = conn.recv(MSG_SIZE)
@@ -117,6 +120,7 @@ class FifoServer(Queue):
                     else:
                         break
             finally:
+                conn.shutdown(socket.SHUT_RDWR)
                 conn.close()
 
 
