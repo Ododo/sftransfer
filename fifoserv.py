@@ -89,7 +89,6 @@ class FifoServer(Queue):
     def listen(self):
         context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         context.load_cert_chain(keyfile=KEY_FILE, certfile=CERT_FILE)
-        context.verify_mode = ssl.CERT_NONE
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self._ip, self._port))
         s.listen(3)
