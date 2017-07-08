@@ -56,8 +56,9 @@ File transfer with several transport ways and security options.
      extensible and with concepts that i understand.
      
  # Usage
-     
-     This program should be runnable with a recent Python 2 or 3
+      
+     This program should be runnable with a recent Python 3 
+     (i will make it compatible with Python2, just a few adjustments to make)
      
      pip install -r requirements.txt
      Server: ./fifoserv.py [ip:[port]]
