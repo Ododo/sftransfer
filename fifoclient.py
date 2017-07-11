@@ -21,17 +21,18 @@ class FifoClient(RendezVous):
         self._server_ip = server_ip
         self._server_port = server_port
 
-    def register(self, host_ip, host_port):
-        return self._send("put", self._token, host_ip, host_port)
+    def register(self, host_ip, host_port, algo):
+        return self._send("post", self._token, host_ip, host_port, algo)
 
     def retreive(self):
         return self._send("get", self._token)
 
-    def _send(self, method, token, ip=None, port=None):
+    def _send(self, method, token, ip=None, port=None, algo=None):
         msg = json.dumps({"method" : method,
                           "token": token,
                           "ip" : ip,
-                          "port": port
+                          "port": port,
+                          "algo" : algo
                           })
         context = ssl.create_default_context()
         context.check_hostname = False
@@ -92,33 +93,36 @@ if __name__ == "__main__":
     else:
         serv_ip, serv_port = SERVER_IP, SERVER_PORT
 
-    bases = []
-    if args.use_upnp:
-        bases.append(TCP_UPnP)
-    if args.use_aes_gcm:
-        bases.append(TCP_AGCM)
-    elif args.use_aes_cbc:
-        bases.append(TCP_ACBC)
-    else:
-        bases.append(TCP_FERNET)
-
-    transfer = type("Transfer", tuple(bases), {})(port=args.tcp_port)
-
     rdv.initialization(server_ip=serv_ip, server_port=serv_port)
-    exch = Exchange(rdv, transfer)
 
     if args.task == "send":
         if not os.access(args.path, os.R_OK):
             print("File is not readable")
             sys.exit(1)
-        res = exch.register(host_ip="", host_port=args.tcp_port)
+
+        bases = []
+        if args.use_upnp:
+            bases.append(TCP_UPnP)
+        if args.use_aes_gcm:
+            algo = "AES-GCM"
+            bases.append(TCP_AGCM)
+        elif args.use_aes_cbc:
+            algo = "AES-CBC"
+            bases.append(TCP_ACBC)
+        else:
+            algo = "FERNET"
+            bases.append(TCP_FERNET)
+
+        transfer = type("Transfer", tuple(bases), {})(port=args.tcp_port)
+        exch = Exchange(rdv, transfer)
+        res = exch.register(host_ip="", host_port=args.tcp_port, algo=algo)
         res = json.loads(res)
         try:
             transfer.initialization(res["msg"])
         except:
             print("You must give a password in the format string,integer")
             sys.exit(1)
-        print("Waiting for file to be pick up ...")
+        print("Waiting for file to be pick up, encryption: "+algo)
         exch.serve(args.path)
         print("Transfer completed.")
 
@@ -126,9 +130,15 @@ if __name__ == "__main__":
         if not os.access(os.path.split(args.path)[0], os.W_OK):
             print("File is not writable")
             sys.exit(1)
-        result = json.loads(exch.retreive())
+        result = json.loads(rdv.retreive())
         if not "msg" in result:
+            transfer = {"AES-GCM" : TCP_AGCM, "AES-CBC" : TCP_ACBC,
+                        "FERNET" : TCP_FERNET
+                    }[result["algo"]]()
             transfer.initialization(result["key"])
+            exch = Exchange(rdv, transfer)
+            print("""Starting TCP transfer with {} encryption algorithm
+            ...""".format(result["algo"]))
             exch.get((result["ip"], result["port"]), args.path)
             print("Transfer completed.")
         else:

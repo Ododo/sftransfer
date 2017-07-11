@@ -75,9 +75,9 @@ class FifoServer(Queue):
             data = json.loads(data)
             token, integer = data["token"].split(",")
             token = self._generateHashmapKey(token, int(integer)).decode()
-            if data["method"].lower() == "put":
+            if data["method"].lower() == "post":
                 key = self._generateKey(token).decode()
-                self[token] = (data["ip"], data["port"], key)
+                self[token] = (data["ip"], data["port"], data["algo"], key)
                 return key
             elif data["method"].lower() == "get":
                 return self[token]
@@ -94,8 +94,8 @@ class FifoServer(Queue):
         s.listen(3)
         while True:
             conn, addr = s.accept()
-            conn = context.wrap_socket(conn, server_side=True)
             try:
+                conn = context.wrap_socket(conn, server_side=True)
                 while True:
                     msg = conn.recv(MSG_SIZE)
                     if msg:
@@ -107,7 +107,8 @@ class FifoServer(Queue):
                                 data = {
                                     "ip" : ip,
                                     "port" : result[1],
-                                    "key" : result[2]
+                                    "algo" : result[2],
+                                    "key" : result[3]
                                 }
                             else:
                                 data = { "msg" : result }
