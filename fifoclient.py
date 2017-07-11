@@ -132,9 +132,10 @@ if __name__ == "__main__":
             sys.exit(1)
         result = json.loads(rdv.retreive())
         if not "msg" in result:
-            transfer = {"AES-GCM" : TCP_AGCM, "AES-CBC" : TCP_ACBC,
-                        "FERNET" : TCP_FERNET
-                    }[result["algo"]]()
+            transfer = {
+                "AES-GCM" : TCP_AGCM, "AES-CBC" : TCP_ACBC,
+                "FERNET" : TCP_FERNET
+            }[result["algo"]]()
             transfer.initialization(result["key"])
             exch = Exchange(rdv, transfer)
             print("""Starting TCP transfer with {} encryption algorithm
