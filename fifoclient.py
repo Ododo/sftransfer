@@ -9,11 +9,9 @@ import argparse
 import base64
 
 from classes import RendezVous, Exchange
-from tcp_transfer import TcpWithFernet
-from tcp_transfer import TcpWithAES
-from tcp_transfer import TcpWithUPnPWithFernet
-from tcp_transfer import TcpWithUPnPWithAES
-
+from tcp_transfer import (
+         TCP_FERNET, TCP_ACBC, TCP_AGCM, TCP_UPnP
+)
 from config import *
 
 
@@ -66,12 +64,17 @@ if __name__ == "__main__":
     parser.add_argument("-u", "--use-upnp", action="store_true",
                         help="Use UPnP IGD to forward the tcp port to \
                         your machine, may not be allowed by all routers")
-    parser.add_argument("-a", "--use-aes", action="store_true",
+    parser.add_argument("-g", "--use-aes-gcm", action="store_true",
                         help="""
-                        Use AES CBC instead of Fernet for data encryption.
-                        You can also use this option to transfer large files,
-                        but then you will get no packet authentification, only
-                        encryption.
+                        Use AES GCM instead of Fernet for data encryption,
+                        use this option when you have to transfer large files.
+                        """)
+    parser.add_argument("-c", "--use-aes-cbc", action="store_true",
+                        help="""
+                        Use AES CBC instead of Fernet for data encryption,
+                        can be used to transfer large files or for performance.
+                        /!\ You will get no packet authentification, only
+                        encryption /!\.
                         """)
 
     args = parser.parse_args()
@@ -89,16 +92,17 @@ if __name__ == "__main__":
     else:
         serv_ip, serv_port = SERVER_IP, SERVER_PORT
 
+    bases = []
     if args.use_upnp:
-        if args.use_aes:
-            transfer = TcpWithUPnPWithAES(port=args.tcp_port)
-        else:
-            transfer = TcpWithUPnPWithFernet(port=args.tcp_port)
+        bases.append(TCP_UPnP)
+    if args.use_aes_gcm:
+        bases.append(TCP_AGCM)
+    elif args.use_aes_cbc:
+        bases.append(TCP_ACBC)
     else:
-        if args.use_aes:
-            transfer = TcpWithAES(port=args.tcp_port)
-        else:
-            transfer = TcpWithFernet(port=args.tcp_port)
+        bases.append(TCP_FERNET)
+
+    transfer = type("Transfer", tuple(bases), {})(port=args.tcp_port)
 
     rdv.initialization(server_ip=serv_ip, server_port=serv_port)
     exch = Exchange(rdv, transfer)

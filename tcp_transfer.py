@@ -68,7 +68,7 @@ class TcpTransfer(FileTransfer):
                     break
             s.close()
 
-class TcpWithUPnP(TcpTransfer):
+class TCP_UPnP(TcpTransfer):
 
     def serve_file(self, path):
         u = miniupnpc.UPnP()
@@ -87,7 +87,7 @@ class TcpWithUPnP(TcpTransfer):
             print("Removing redirection ...")
             u.deleteportmapping(self._port, 'TCP')
 
-class TcpWithFernet(TcpTransfer):
+class TCP_FERNET(TcpTransfer):
 
     def initialization(self, key):
         key = base64.urlsafe_b64decode(key)
@@ -104,7 +104,7 @@ class TcpWithFernet(TcpTransfer):
             return b""
         return self._cipher.encrypt(chunk)
 
-class TcpWithAES(TcpTransfer):
+class TCP_ACBC(TcpTransfer):
 
     def initialization(self, key):
         key = base64.urlsafe_b64decode(key)
@@ -131,22 +131,31 @@ class TcpWithAES(TcpTransfer):
         chunk = self._padder.update(chunk)
         return self._encryptor.update(chunk)
 
+class TCP_AGCM(TcpTransfer):
 
-class TcpWithUPnPWithFernet(TcpWithFernet, TcpWithUPnP):
-    pass
+    def initialization(self, key):
+        key = base64.urlsafe_b64decode(key)
+        k = key[:16]
+        iv = key[16:28]
+        cipher = Cipher(algorithms.AES(k), modes.GCM(iv),
+                        backend=default_backend())
+        self._decryptor = cipher.decryptor()
+        self._encryptor = cipher.encryptor()
+        self._last_packet = b""
 
-class TcpWithUPnPWithAES(TcpWithAES, TcpWithUPnP):
-    pass
+    def _process_out_data(self, chunk):
+        if chunk is None:
+            ret = self._encryptor.finalize() + self._encryptor.tag
+            return ret
+        return self._encryptor.update(chunk)
 
-# class TLSTUP(TcpWithUPnP):
-#     import ssl
-#     def initialization(self, certfile, keyfile=None):
-#         self._keyfile = keyfile
-#         self._certfile = certfile
-#
-#     def getSocket(self):
-#         sock = super().getSocket()
-#         sock = ssl.wrap_socket(sock, keyfile=self._keyfile,
-#                                      certfile=self._certfile)
-#
-#         return sock
+    def _process_in_data(self, chunk):
+        if chunk is None:
+            tag = self._last_packet[-16:]
+            chunk = self._last_packet[:-16]
+            return self._decryptor.update(chunk) + \
+                   self._decryptor.finalize_with_tag(tag)
+
+        ret = self._decryptor.update(self._last_packet)
+        self._last_packet = chunk
+        return ret
