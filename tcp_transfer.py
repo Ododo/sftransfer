@@ -58,7 +58,6 @@ class TcpTransfer(FileTransfer):
         s.connect(host)
 
         with open(path, "wb") as f:
-            cnt = 0
             while True:
                 chunk = s.recv(self._chunk_size)
                 if chunk:

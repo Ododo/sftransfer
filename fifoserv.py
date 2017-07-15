@@ -22,6 +22,8 @@ from config import *
 class FifoServer(Queue):
 
     class Item:
+        __slots__ = 'token', 'host'
+
         def __init__(self, token, host):
             self.token = token
             self.host = host
