@@ -2,15 +2,15 @@
 import os
 
 
-#tcp filetransfer
+#tcp filetransfer default values
 TCP_CHUNK_SIZE=4096
 TCP_PORT=6667
 
-#relay
-SERVER_KEY = os.urandom(16)
-SERVER_PORT = 7888
-SERVER_IP = ""
-CERT_FILE="test-pem/cert.pem"
-KEY_FILE="test-pem/key.pem"
+#RDV server default values
+SERVER_KEY = os.urandom(16) #must be per instance generated
+SERVER_PORT = 80
+SERVER_IP = "193.54.15.207"
+CERT_FILE="pems/cert.pem"
+KEY_FILE="pems/key.pem"
 MAX_ITEM = 1024
 MSG_SIZE = 512

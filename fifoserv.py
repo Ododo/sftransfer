@@ -74,7 +74,7 @@ class FifoServer(Queue):
 
     def _process_message(self, data):
         try:
-            data = json.loads(data)
+            data = json.loads(data.decode())
             token, integer = data["token"].split(",")
             token = self._generateHashmapKey(token, int(integer)).decode()
             if data["method"].lower() == "post":
@@ -86,6 +86,7 @@ class FifoServer(Queue):
         except KeyError:
             return "Invalid token or data incomplete"
         except Exception as e:
+            print(str(e))
             return "Bad data format"
 
     def listen(self):
@@ -117,13 +118,20 @@ class FifoServer(Queue):
                             data = json.dumps(data).encode()
                             conn.sendall(data)
                         except Exception as e:
-                            print(e)
+                            print(str(e))
                         break
                     else:
                         break
+            
+            except OSError:
+                continue
+            
             finally:
-                conn.shutdown(socket.SHUT_RDWR)
-                conn.close()
+                try:
+                    conn.shutdown(socket.SHUT_RDWR)
+                    conn.close()
+                except OSError:
+                    pass
 
 
 if __name__ == "__main__":
@@ -142,7 +150,7 @@ if __name__ == "__main__":
         else:
             port = SERVER_PORT
     else:
-        ip = "localhost"
+        ip = SERVER_IP
         port = SERVER_PORT
 
     print("Listening on {}:{}".format(ip, port))
